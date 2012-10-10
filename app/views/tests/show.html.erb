@@ -1,5 +1,10 @@
 <style>
 
+body {
+  font-family: sans-serif;
+  font-size: small;
+}
+
 table {
   margin-top: 60px;
   margin-left: auto;
@@ -8,7 +13,7 @@ table {
 }
 
 td {
-  width: 60px;
+  width: 50px;
   height: 30px;
   border: solid 1px #ccc;
   text-align: center;
@@ -18,13 +23,17 @@ td {
   border: none;
 }
 
+.current {
+  font-weight: bold;
+}
+
 </style>
 <table>
   <tr>
     <td class='borderless'>&nbsp;</td>
     <td class='borderless'>Q</td>
     <% @items.each do |item| %>
-    <td><%= @qs[item] %></td>
+    <td><%= '%.4f' % @qs[item] %></td>
     <% end %>
   </tr>
   <tr>
@@ -33,17 +42,37 @@ td {
     <% @items.each do |item| %>
     <td><%= item %></td>
     <% end %>
+    <td>recommendations</td>
+    <td>converged</td>
   </tr>
   <% @subjects.each do |subject| %>
   <tr>
-    <td><%= @ps[subject] %></td>
+    <td><%= '%.4f' % @ps[subject] %></td>
     <td><%= subject %></td>
     <% @items.each do |item| %>
-    <td><%= @ratings[subject][item] %></td>
+    <td><%= @ratings[subject][item] ? "1" : '%.4f' % (@ps[subject] * @qs[item]) %></td>
     <% end %>
+    <td><%= @recommendations[subject] %></td>
+    <td><%= @converged[subject] %></td>
   </tr>
   <% end %>
 </table>
+
+<table>
+  <tr>
+    <td colspan='<%= @history %>'>squared errors</td>
+    <td>steps</td>
+    <td class='borderless'>&nbsp;</td>
+  </tr>
+  <tr>
+    <% @history.times do |h| %>
+    <td><%= '%.4f' % @quad_error_sums[h] %></td>
+    <% end %>
+    <td><%= @steps %></td>
+    <td class='borderless'><%= @stahp ? 'STAHP!' : '' %></td>
+  </tr>
+</table>
+
 
 <table>
   <tr>
