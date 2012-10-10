@@ -1,0 +1,53 @@
+<style>
+
+table {
+  margin-top: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+}
+
+td {
+  width: 60px;
+  height: 30px;
+  border: solid 1px #ccc;
+  text-align: center;
+}
+
+.borderless {
+  border: none;
+}
+
+</style>
+<table>
+  <tr>
+    <td class='borderless'>&nbsp;</td>
+    <td class='borderless'>Q</td>
+    <% @items.each do |item| %>
+    <td><%= @qs[item] %></td>
+    <% end %>
+  </tr>
+  <tr>
+    <td class='borderless'>P</td>
+    <td class='borderless'>&nbsp;</td>
+    <% @items.each do |item| %>
+    <td><%= item %></td>
+    <% end %>
+  </tr>
+  <% @subjects.each do |subject| %>
+  <tr>
+    <td><%= @ps[subject] %></td>
+    <td><%= subject %></td>
+    <% @items.each do |item| %>
+    <td><%= @ratings[subject][item] %></td>
+    <% end %>
+  </tr>
+  <% end %>
+</table>
+
+<table>
+  <tr>
+    <td><%= link_to "reset", reset_test_path %></td>
+    <td><%= link_to "step", step_test_path %></td>
+  </tr>
+</table>
