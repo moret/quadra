@@ -41,3 +41,6 @@ gem 'jquery-rails'
 
 gem 'redis'
 gem 'redis-namespace'
+
+gem 'humanize'
+gem 'mongoid'

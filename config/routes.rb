@@ -62,4 +62,11 @@ Quadra::Application.routes.draw do
       get :reset
     end
   end
+
+  resource :neighbours, :only => [:show] do
+    collection do
+      get :step
+      get :reset
+    end
+  end
 end

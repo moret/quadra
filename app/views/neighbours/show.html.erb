@@ -1,0 +1,74 @@
+<style>
+
+body {
+  font-family: sans-serif;
+  font-size: small;
+}
+
+table {
+  margin-top: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+}
+
+td {
+  width: 50px;
+  height: 30px;
+  border: solid 1px #ccc;
+  text-align: center;
+}
+
+.borderless {
+  border: none;
+}
+
+.current {
+  font-weight: bold;
+}
+
+</style>
+
+<table>
+  <tr>
+    <td><%= link_to "reset", reset_neighbours_path %></td>
+    <td><%= link_to "step", neighbours_path %></td>
+  </tr>
+</table>
+
+<table>
+  <% @neighbours.q_matrix.each do |factors| %>
+  <tr>
+    <td class='borderless' colspan='<%= @neighbours.q_matrix.size + 1 %>'>&nbsp;</td>
+    <% factors.each do |factor| %>
+    <td><%= '%.4f' % factor %></td>
+    <% end %>
+  </tr>
+  <% end %>
+  <tr class='borderless'>
+    <td class='borderless' colspan='<%= @neighbours.q_matrix.size + 1 %>'>&nbsp;</td>
+    <% @neighbours.items.each do |item| %>
+    <td><%= item %></td>
+    <% end %>
+  </tr>
+  <% @neighbours.p_matrix.each_with_index do |factors, user_index| %>
+  <tr>
+    <% factors.each do |factor| %>
+    <td><%= '%.4f' % factor %></td>
+    <% end %>
+    <td><%= @neighbours.users[user_index] %></td>
+    <% @neighbours.items.each_with_index do |item, item_index| %>
+    <td><%= @neighbours.ratings[user_index][item_index] %></td>
+    <% end %>
+  </tr>
+  <% end %>
+</table>
+
+
+<table>
+  <% @neighbours.quad_sum_errors.reverse_each do |quad_sum_error| %>
+  <tr>
+    <td><%= quad_sum_error %></td>
+  </tr>
+  <% end %>
+</table>
