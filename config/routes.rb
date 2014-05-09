@@ -56,13 +56,6 @@ Quadra::Application.routes.draw do
   # Note: This route will make all actions in every controller accessible via GET requests.
   # match ':controller(/:action(/:id))(.:format)'
 
-  resource :test, :only => [:show] do
-    collection do
-      get :step
-      get :reset
-    end
-  end
-
   resource :neighbours, :only => [:show] do
     collection do
       get :step

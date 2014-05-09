@@ -6,9 +6,9 @@ body {
 }
 
 table {
-  margin-top: 60px;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 20px;
   border-collapse: collapse;
 }
 
@@ -17,6 +17,10 @@ td {
   height: 30px;
   border: solid 1px #ccc;
   text-align: center;
+}
+
+.meta {
+  margin-left: 10px;
 }
 
 .borderless {
@@ -29,7 +33,7 @@ td {
 
 </style>
 
-<table>
+<table class='meta'>
   <tr>
     <td><%= link_to "reset", reset_neighbours_path %></td>
     <td><%= link_to "step", neighbours_path %></td>
@@ -37,16 +41,17 @@ td {
 </table>
 
 <table>
-  <% @neighbours.q_matrix.each do |factors| %>
+  <% for factor_index in 0..(@neighbours.factors_size - 1) do %>
   <tr>
-    <td class='borderless' colspan='<%= @neighbours.q_matrix.size + 1 %>'>&nbsp;</td>
-    <% factors.each do |factor| %>
-    <td><%= '%.4f' % factor %></td>
+    <td class='borderless' colspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
+    <% @neighbours.items.each_with_index do |item, item_index| %>
+    <td><%= '%.4f' % @neighbours.q_matrix[item_index][factor_index] %></td>
     <% end %>
+    <td class='borderless' rowspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
   </tr>
   <% end %>
   <tr class='borderless'>
-    <td class='borderless' colspan='<%= @neighbours.q_matrix.size + 1 %>'>&nbsp;</td>
+    <td class='borderless' colspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
     <% @neighbours.items.each do |item| %>
     <td><%= item %></td>
     <% end %>
@@ -58,17 +63,27 @@ td {
     <% end %>
     <td><%= @neighbours.users[user_index] %></td>
     <% @neighbours.items.each_with_index do |item, item_index| %>
-    <td><%= @neighbours.ratings[user_index][item_index] %></td>
+      <% original_rating = @neighbours.original_ratings[user_index][item_index] %>
+      <% approximated_rating = @neighbours.aproximated_ratings[user_index][item_index] %>
+      <% if original_rating %>
+      <td><b><%= original_rating %></b></td>
+      <% else %>
+        <% if approximated_rating %>
+        <td><%= '%.4f' % approximated_rating %></td>
+        <% else %>
+        <td>-</td>
+        <% end %>
+      <% end %>
     <% end %>
+    <td><%= @neighbours.recommendation_for user_index %></td>
   </tr>
   <% end %>
 </table>
 
-
-<table>
-  <% @neighbours.quad_sum_errors.reverse_each do |quad_sum_error| %>
+<table class='meta'>
   <tr>
+  <% @neighbours.quad_sum_errors.reverse_each do |quad_sum_error| %>
     <td><%= quad_sum_error %></td>
-  </tr>
   <% end %>
+  </tr>
 </table>

@@ -1,7 +1,7 @@
 class NeighboursController < ApplicationController
   def show
     if Neighbours.empty?
-      Neighbours.create 
+      Neighbours.create!
       @neighbours = Neighbours.first
     else
       @neighbours = Neighbours.first
