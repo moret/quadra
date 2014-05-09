@@ -36,46 +36,61 @@ td {
 <table class='meta'>
   <tr>
     <td><%= link_to "reset", reset_neighbours_path %></td>
-    <td><%= link_to "step", neighbours_path %></td>
+    <td><%= link_to "step", step_neighbours_path %></td>
   </tr>
 </table>
 
 <table>
-  <% for factor_index in 0..(@neighbours.factors_size - 1) do %>
+  <% 1.upto(@neighbours.factors_size) do |factor_index| %>
   <tr>
     <td class='borderless' colspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
-    <% @neighbours.items.each_with_index do |item, item_index| %>
-    <td><%= '%.4f' % @neighbours.q_matrix[item_index][factor_index] %></td>
+    <% Item.all.each do |item| %>
+      <% item_factor = ItemFactor.where(item_id: item.id, factor_index: factor_index).first %>
+      <% if item_factor %>
+    <td><%= '%.4f' % item_factor.value %></td>
+      <% else %>
+    <td><%= 'n/a' %></td>
+      <% end %>
     <% end %>
     <td class='borderless' rowspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
   </tr>
   <% end %>
   <tr class='borderless'>
     <td class='borderless' colspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
-    <% @neighbours.items.each do |item| %>
-    <td><%= item %></td>
+    <% Item.all.each do |item| %>
+    <td><%= item.name %></td>
     <% end %>
   </tr>
-  <% @neighbours.p_matrix.each_with_index do |factors, user_index| %>
+  <% User.all.each do |user| %>
   <tr>
-    <% factors.each do |factor| %>
-    <td><%= '%.4f' % factor %></td>
-    <% end %>
-    <td><%= @neighbours.users[user_index] %></td>
-    <% @neighbours.items.each_with_index do |item, item_index| %>
-      <% original_rating = @neighbours.original_ratings[user_index][item_index] %>
-      <% approximated_rating = @neighbours.aproximated_ratings[user_index][item_index] %>
-      <% if original_rating %>
-      <td><b><%= original_rating %></b></td>
+    <% 1.upto(@neighbours.factors_size) do |factor_index| %>
+      <% user_factor = UserFactor.where(user_id: user.id, factor_index: factor_index).first %>
+      <% if user_factor %>
+    <td><%= '%.4f' % user_factor.value %></td>
       <% else %>
-        <% if approximated_rating %>
-        <td><%= '%.4f' % approximated_rating %></td>
+    <td><%= 'n/a' %></td>
+      <% end %>
+    <% end %>
+    <td><%= user.name %></td>
+    <% Item.all.each do |item| %>
+      <% real_rating = RealRating.where(user_id: user.id, item_id: item.id).first %>
+      <% predicted_rating = PredictedRating.where(user_id: user.id, item_id: item.id).first %>
+      <% if real_rating %>
+    <td><b><%= real_rating.value %></b></td>
+      <% else %>
+        <% if predicted_rating %>
+    <td><%= '%.4f' % predicted_rating.value %></td>
         <% else %>
-        <td>-</td>
+    <td>-</td>
         <% end %>
       <% end %>
     <% end %>
-    <td><%= @neighbours.recommendation_for user_index %></td>
+    <% top_predicted_item = user.top_predicted_item %>
+    <% if top_predicted_item %>
+    <td><%= top_predicted_item.name %></td>
+    <% else %>
+    <td>?</td>
+    <% end %>
   </tr>
   <% end %>
 </table>
