@@ -74,31 +74,28 @@ td {
     <td><%= user.name %></td>
     <% Item.all.each do |item| %>
       <% real_rating = RealRating.where(user_id: user.id, item_id: item.id).first %>
-      <% predicted_rating = PredictedRating.where(user_id: user.id, item_id: item.id).first %>
+      <% predicted_rating = PredictedRating.for(user, item).value %>
       <% if real_rating %>
     <td><b><%= real_rating.value %></b></td>
+      <% elsif predicted_rating %>
+    <td><%= '%.4f' % predicted_rating %></td>
       <% else %>
-        <% if predicted_rating %>
-    <td><%= '%.4f' % predicted_rating.value %></td>
-        <% else %>
     <td>-</td>
-        <% end %>
       <% end %>
     <% end %>
-    <% top_predicted_item = user.top_predicted_item %>
-    <% if top_predicted_item %>
-    <td><%= top_predicted_item.name %></td>
-    <% else %>
-    <td>?</td>
+    <td>
+    <% user.top_predicted_items(3).each do |top_predicted_item| %>
+      <%= top_predicted_item.name %>,      
     <% end %>
+    </td>
   </tr>
   <% end %>
 </table>
 
 <table class='meta'>
   <tr>
-  <% @neighbours.quad_sum_errors.reverse_each do |quad_sum_error| %>
-    <td><%= quad_sum_error %></td>
+  <% @neighbours.rmses.reverse_each do |rmse| %>
+    <td><%= rmse %></td>
   <% end %>
   </tr>
 </table>

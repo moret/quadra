@@ -7,4 +7,6 @@ class ItemFactor
 
   validates_presence_of :item_id, :factor_index, :value
   validates_uniqueness_of :factor_index, scope: :item_id
+
+  index [[:item_id, Mongo::ASCENDING], [:factor_index, Mongo::ASCENDING]]
 end
