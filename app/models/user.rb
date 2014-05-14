@@ -2,9 +2,11 @@ class User
   include Mongoid::Document
 
   field :name, type: String
-  field :recommended_items_ids, type: Array
+  field :factors, type: Array
+  field :ratings, type: Hash, default: {}
+  field :recommended_items_ids, type: Array, default: []
 
-  validates_presence_of :name
+  validates_presence_of :name, :factors
 
   def top_predicted_items how_many=5
     if recommended_items_ids
@@ -12,5 +14,9 @@ class User
     else
       []
     end
+  end
+
+  def rating_for item
+    ratings[item.id.to_s]
   end
 end

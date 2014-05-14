@@ -9,13 +9,11 @@ class PredictedRating
   end
 
   def self.for user, item
-    user_factors = UserFactor.where user_id: user.id
-
     value = 0.0
 
-    user_factors.each do |user_factor|
-      item_factor = ItemFactor.where(item_id: item.id, factor_index: user_factor.factor_index).first
-      value += user_factor.value * item_factor.value
+    user.factors.each_with_index do |user_factor, factor_index|
+      item_factor = item.factors[factor_index]
+      value += user_factor * item_factor
     end
 
     PredictedRating.new user, item, value

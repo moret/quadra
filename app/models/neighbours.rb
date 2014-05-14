@@ -1,114 +1,122 @@
 class Neighbours
   include Mongoid::Document
 
+  # USERS_SIZE = 300
+  # ITEMS_SIZE = 1000
+  # FACTORS_SIZE = 5
+  # SPARSE_RANGE = 0..500
+
   USERS_SIZE = 8
   ITEMS_SIZE = 18
   FACTORS_SIZE = 3
-  ALPHA = 0.001
   SPARSE_RANGE = 0..10
-  INITIAL_FACTORS_RANGE = 0.01..0.1
-  INITIAL_RATINGS_RANGE = 0..5
-  RECOMMENDATIONS_COUNT = 10
+
+  ALPHA = 0.001
+  INITIAL_FACTORS_RANGE = 0.1..0.3
+  INITIAL_RATINGS_RANGE = 1..5
+  RECOMMENDATIONS_LIMIT = 10
+  MINIMUM_STEPS = 5
+  ERROR_VARIANCE_STOP = 0.0001
 
   field :rmses, type: Array, default: []
 
-  def self.its_time!
-    Item.destroy_all
-    ItemFactor.destroy_all
-    Neighbours.destroy_all
-    RealRating.destroy_all
+  def self.clear_the_house
     User.destroy_all
-    UserFactor.destroy_all
+    Item.destroy_all
+    Neighbours.destroy_all
 
     Neighbours.create!
+  end
 
-    user_names = JSON.load Net::HTTP.get 'namey.muffinlabs.com', "/name.json?count=#{USERS_SIZE}&with_surname=false&frequency=all"
-    user_names.each do |user_name|
-      User.create! name: user_name
+  def self.its_time!
+    clear_the_house
+
+    1.upto(USERS_SIZE) do |user_serial|
+      factors = Array.new(FACTORS_SIZE) do
+        Random.rand INITIAL_FACTORS_RANGE
+      end
+
+      User.create! name: user_serial.humanize, factors: factors
     end
-
-    # 1.upto(USERS_SIZE) do |user_serial|
-    #   User.create! name: user_serial.humanize
-    # end
 
     1.upto(ITEMS_SIZE) do |item_serial|
-      Item.create! name: item_serial.humanize
-    end
-
-    1.upto(FACTORS_SIZE) do |factor_index|
-      User.all.each do |user|
-        UserFactor.create! user_id: user.id, factor_index: factor_index, value: Random.rand(INITIAL_FACTORS_RANGE)
+      factors = Array.new(FACTORS_SIZE) do
+        Random.rand INITIAL_FACTORS_RANGE
       end
 
-      Item.all.each do |item|
-        ItemFactor.create! item_id: item.id, factor_index: factor_index, value: Random.rand(INITIAL_FACTORS_RANGE)
-      end
+      Item.create! name: item_serial.humanize, factors: factors
     end
 
     User.all.each do |user|
+      ratings = user.ratings
       Item.all.each do |item|
         luck = Random.rand SPARSE_RANGE
         if luck == 0
-          RealRating.create! user_id: user.id, item_id: item.id, value: Random.rand(INITIAL_RATINGS_RANGE)
+          ratings[item.id] = Random.rand INITIAL_RATINGS_RANGE
         end
       end
+      user.update_attributes! ratings: ratings
+    end
+  end
+
+  def walk
+    (MINIMUM_STEPS - rmses.count).times do
+      step
+    end
+
+    while (rmses[-2] - rmses[-1] > ERROR_VARIANCE_STOP) do
+      step
     end
   end
 
   def step
     User.all.each do |user|
+      user_factors = user.factors
+
       Item.all.each do |item|
-        aproximated_rating_value = PredictedRating.for(user, item).value
-        real_rating = RealRating.where(user_id: user.id, item_id: item.id).first
+        real_rating = user.rating_for item
+
         if real_rating
-          quad_error = (real_rating.value - aproximated_rating_value) ** 2
+          item_factors = item.factors
+          quad_error = (real_rating - PredictedRating.for(user, item).value) ** 2
           root_error = Math.sqrt quad_error
 
-          user_factors = UserFactor.where user_id: user.id
-          user_factors.each do |user_factor|
-            item_factor = ItemFactor.where(item_id: item.id, factor_index: user_factor.factor_index).first
-
-            user_factor_value = user_factor.value + 2 * ALPHA * root_error * item_factor.value
-            item_factor_value = item_factor.value + 2 * ALPHA * root_error * user_factor.value
-
-            user_factor.update_attributes! value: user_factor_value
-            item_factor.update_attributes! value: item_factor_value
+          user_factors.each_with_index do |user_factor, factor_index|
+            item_factor = item_factors[factor_index]
+            user_factors[factor_index] = user_factor + 2 * ALPHA * root_error * item_factor
+            item_factors[factor_index] = item_factor + 2 * ALPHA * root_error * user_factor
           end
+
+          item.update_attributes! factors: item_factors
         end
       end
+
+      user.update_attributes! factors: user_factors
     end
 
     quad_sum_error = 0.0
     total_ratings = 0
-    predicted_ratings = {}
 
     User.all.each do |user|
-      recommendations = SortedSet.new
-      unless predicted_ratings[user.id]
-        predicted_ratings[user.id] = {}
-      end
+      recommendations = RecommendationsSet.new RECOMMENDATIONS_LIMIT
 
       Item.all.each do |item|
         predicted_rating = PredictedRating.for user, item
-        real_rating = RealRating.where(user_id: user.id, item_id: item.id).first
+        real_rating = user.rating_for item
+
         if real_rating
-          quad_sum_error += (real_rating.value - predicted_rating.value) ** 2
+          quad_sum_error += (real_rating - predicted_rating.value) ** 2
           total_ratings += 1
         else
-          predicted_ratings[user.id][item.id] = predicted_rating.value
-          recommendations.add predicted_rating
-          if recommendations.count > RECOMMENDATIONS_COUNT
-            recommendations.delete recommendations.to_a.first
-          end
+          recommendations.push predicted_rating
         end
       end
-      user.update_attributes! recommended_items_ids: recommendations.to_a.collect{|r| r.item.id}.reverse
+
+      user.update_attributes! recommended_items_ids: recommendations.ids
     end
 
     rmses << Math.sqrt(quad_sum_error / total_ratings)
     save!
-
-    predicted_ratings
   end
 
   def factors_size

@@ -58,6 +58,7 @@ Quadra::Application.routes.draw do
 
   resource :neighbours, :only => [:show] do
     collection do
+      get :walk
       get :step
       get :reset
     end

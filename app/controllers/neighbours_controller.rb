@@ -7,22 +7,18 @@ class NeighboursController < ApplicationController
     end
   end
 
+  def walk
+    Neighbours.first.walk
+    redirect_to neighbours_path
+  end
+
   def step
-    neighbours = Neighbours.first
-    2.times do
-      neighbours.step
-    end
-
-    while neighbours.rmses[-2] > neighbours.rmses[-1] do
-      neighbours.step
-    end
-
+    Neighbours.first.step
     redirect_to neighbours_path
   end
 
   def reset
     Neighbours.its_time!
-
     redirect_to neighbours_path
   end
 end
