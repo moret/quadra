@@ -4,6 +4,7 @@ class User
   field :name, type: String
   field :factors, type: Array
   field :ratings, type: Hash, default: {}
+  field :untrained_ratings, type: Hash, default: {}
   field :recommended_items_ids, type: Array, default: []
 
   validates_presence_of :name, :factors
@@ -18,5 +19,9 @@ class User
 
   def rating_for item
     ratings[item.id.to_s]
+  end
+
+  def untrained_rating_for item
+    untrained_ratings[item.id.to_s]
   end
 end

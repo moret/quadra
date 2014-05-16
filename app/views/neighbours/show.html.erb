@@ -42,16 +42,11 @@ td {
 </table>
 
 <table>
-  <% 0.upto(@neighbours.factors_size-1) do |factor_index| %>
+  <% @neighbours.factors_size.times do |factor_index| %>
   <tr>
     <td class='borderless' colspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
     <% Item.all.each do |item| %>
-      <% item_factor = item.factors[factor_index] %>
-      <% if item_factor %>
-    <td><%= '%.4f' % item_factor %></td>
-      <% else %>
-    <td><%= 'n/a' %></td>
-      <% end %>
+    <td><%= '%.4f' % item.factors[factor_index] %></td>
     <% end %>
     <td class='borderless' rowspan='<%= @neighbours.factors_size + 1 %>'>&nbsp;</td>
   </tr>
@@ -64,31 +59,22 @@ td {
   </tr>
   <% User.all.each do |user| %>
   <tr>
-    <% 0.upto(@neighbours.factors_size-1) do |factor_index| %>
-      <% user_factor = user.factors[factor_index] %>
-      <% if user_factor %>
-    <td><%= '%.4f' % user_factor %></td>
-      <% else %>
-    <td><%= 'n/a' %></td>
-      <% end %>
+    <% @neighbours.factors_size.times do |factor_index| %>
+    <td><%= '%.4f' % user.factors[factor_index] %></td>
     <% end %>
     <td><%= user.name %></td>
     <% Item.all.each do |item| %>
-      <% real_rating = user.rating_for item %>
-      <% predicted_rating = PredictedRating.for(user, item).value %>
-      <% if real_rating %>
-    <td><b><%= real_rating %></b></td>
-      <% elsif predicted_rating %>
-    <td><%= '%.4f' % predicted_rating %></td>
+      <% rating = user.rating_for item %>
+      <% untrained_rating = user.untrained_rating_for item %>
+      <% if rating %>
+    <td class='trained_rating'><%= rating %></td>
+      <% elsif untrained_rating %>
+    <td class='untrained_rating'><%= '%.4f' % PredictedRating.for(user, item).value %> (<%= untrained_rating %>)</td>
       <% else %>
-    <td>-</td>
+    <td class='predicted_rating'><%= '%.4f' % PredictedRating.for(user, item).value %></td>
       <% end %>
     <% end %>
-    <td>
-    <% user.top_predicted_items(3).each do |top_predicted_item| %>
-      <%= top_predicted_item.name %>,      
-    <% end %>
-    </td>
+    <td><%= user.top_predicted_items(3).collect(&:name).join(', ') %></td>
   </tr>
   <% end %>
 </table>
@@ -96,6 +82,11 @@ td {
 <table class='meta'>
   <tr>
   <% @neighbours.rmses.reverse_each do |rmse| %>
+    <td><%= rmse %></td>
+  <% end %>
+  </tr>
+  <tr>
+  <% @neighbours.untrained_rmses.reverse_each do |rmse| %>
     <td><%= rmse %></td>
   <% end %>
   </tr>
